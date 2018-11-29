@@ -18,10 +18,10 @@ data BExp = TRUE --
    deriving(Show)
 
 -- Comandos
-data CExp = While BExp CExp
-     | If BExp CExp CExp
-     | Seq CExp CExp
-     | Atrib AExp AExp
+data CExp = While BExp CExp --
+     | If BExp CExp CExp --
+     | Seq CExp CExp --
+     | Atrib AExp AExp --
      | Skip
    deriving(Show)                
 
@@ -98,12 +98,24 @@ isFinalB x = False
 
 ------------------------------------------------------------------------------------
 
-
--- cSmallStep :: (CExp,Estado) -> (CExp,Estado)
-
---cSmallStep (If b c1 c2,s) = 
---cSmallStep (Seq c1 c2,s)  = 
---cSmallStep (Atrib (Var x) e,s) = 
+-- Interpretador de Comandos
+cSmallStep :: (CExp,Estado) -> (CExp,Estado)
+-- Regra do WHILE
+cSmallStep (While b c, s) = (If b (Seq c (While b c)) Skip, s)
+-- Regras do IF
+cSmallStep (If TRUE c1 c2, s) = (c1, s)
+cSmallStep (If FALSE c1 c2, s) = (c2, s)
+cSmallStep (If b c1 c2, s) = let (bn, sn) = bSmallStep (b, s)
+                             in (If bn c1 c2, sn)
+-- Regras da SEQUÊNCIA
+cSmallStep (Seq c1 c2,s) = (c1, s)
+cSmallStep (Seq Skip c, s) = (c, s)
+cSmallStep (Seq c1 c2,s) = let (cf,sf) = cSmallStep (c1, s)
+                           in (Seq cf c2, sf)
+-- Regras da ATRIBUIÇÃO
+cSmallStep (Atrib (Var x) (Num y), s) = (Skip, mudaVar s x y)
+cSmallStep (Atrib (Var x) e,s) =  let (ef,_) = aSmallStep (e,s)
+                                  in (Atrib (Var x) ef, s)
 
 
 -- interpretC :: (CExp,Estado) -> (CExp,Estado)
