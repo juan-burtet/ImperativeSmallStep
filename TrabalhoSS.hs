@@ -22,7 +22,7 @@ data CExp = While BExp CExp --
      | If BExp CExp CExp --
      | Seq CExp CExp --
      | Atrib AExp AExp --
-     | Skip
+     | Skip --
    deriving(Show)                
 
 
@@ -53,7 +53,7 @@ aSmallStep (Mul e1 e2, s) = let (ef,_) = aSmallStep (e1, s)
 interpretA :: (AExp,Estado) -> (AExp,Estado)
 interpretA (a,s) = if isFinalA a then (a,s) else interpretA (aSmallStep (a,s))
 
--- Confere se é final
+-- Confere se a expressão aritmética é final
 isFinalA :: AExp -> Bool
 isFinalA (Num a) = True
 isFinalA x = False
@@ -77,7 +77,7 @@ bSmallStep (Ig (Num x) (Num y), s)
   | x == y = (TRUE, s)
   | otherwise = (FALSE, s)
 bSmallStep (Ig (Num x) e2, s) = let (ef,_) = aSmallStep (e2, s)
-                                in (If (Num x) ef, s)
+                                in (Ig (Num x) ef, s)
 bSmallStep (Ig e1 e2, s) = let (ef,_) = aSmallStep (e1, s)
                            in (Ig ef e2, s)
 -- Regras do OR
@@ -90,7 +90,7 @@ bSmallStep (Or b1 b2,s )  = let (bn,sn) = bSmallStep (b1, s)
 interpretB :: (BExp,Estado) -> (BExp,Estado)
 interpretB (b,s) = if isFinalB b then (b,s) else interpretB (bSmallStep (b,s))
 
--- Confere se é final
+-- Confere se a expressão booleana é final
 isFinalB :: BExp -> Bool
 isFinalB TRUE = True
 isFinalB FALSE = True
@@ -117,13 +117,16 @@ cSmallStep (Atrib (Var x) (Num y), s) = (Skip, mudaVar s x y)
 cSmallStep (Atrib (Var x) e,s) =  let (ef,_) = aSmallStep (e,s)
                                   in (Atrib (Var x) ef, s)
 
+-- Interpreta todos os comandos
+interpretC :: (CExp,Estado) -> (CExp,Estado)
+interpretC (c,s) = if isFinalB then (c,s) else interpretC (cSmallStep (c,s))
 
--- interpretC :: (CExp,Estado) -> (CExp,Estado)
--- interpretC (c,s) = ?
+-- Confere se o comando é final
+isFinalC :: CExp -> Bool
+isFinalC Skip = True
+isFinalC x = False
 
--- isFinalC :: CExp -> Bool
-
-
+----------------------------------------------------------------------------------
 
 meuEstado :: Estado
 meuEstado = [("x",3), ("y",0), ("z",0)]
