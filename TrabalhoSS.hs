@@ -15,6 +15,7 @@ data BExp = TRUE --
      | And BExp BExp --
      | Or  BExp BExp --
      | Ig  AExp AExp --
+     | Leq AExp AExp
    deriving(Show)
 
 -- Comandos
@@ -22,9 +23,11 @@ data CExp = While BExp CExp --
      | If BExp CExp CExp --
      | Seq CExp CExp --
      | Atrib AExp AExp --
+     | DuplaAtrib AExp AExp AExp AExp --
+     | RepeatUntil CExp BExp --
+     | For AExp AExp AExp CExp
      | Skip --
    deriving(Show)                
-
 
 -- Interpretador de Expresões Aritméticas
 aSmallStep :: (AExp,Estado) -> (AExp,Estado)
@@ -85,6 +88,14 @@ bSmallStep (Or TRUE b2, s) = (TRUE, s)
 bSmallStep (Or FALSE b2, s) = (b2, s)
 bSmallStep (Or b1 b2,s )  = let (bn,sn) = bSmallStep (b1, s)
                             in (Or bn b2, sn)
+-- Regras do Menorigual
+bSmallStep (Leq (Num x) (Num y), s)
+  | x <= y = (TRUE, s)
+  | otherwise = (FALSE, s)
+bSmallStep (Leq (Num x) e2, s) = let (ef,_) = aSmallStep (e2, s)
+                                 in (Leq (Num x) ef, s)
+bSmallStep (Leq e1 e2, s) = let (ef,_) = aSmallStep (e1, s)
+                            in (Leq ef e2, s)
 
 -- Interpreta todas as expressões booleanas
 interpretB :: (BExp,Estado) -> (BExp,Estado)
@@ -108,7 +119,6 @@ cSmallStep (If FALSE c1 c2, s) = (c2, s)
 cSmallStep (If b c1 c2, s) = let (bn, sn) = bSmallStep (b, s)
                              in (If bn c1 c2, sn)
 -- Regras da SEQUÊNCIA
-cSmallStep (Seq c1 c2,s) = (c1, s)
 cSmallStep (Seq Skip c, s) = (c, s)
 cSmallStep (Seq c1 c2,s) = let (cf,sf) = cSmallStep (c1, s)
                            in (Seq cf c2, sf)
@@ -116,6 +126,17 @@ cSmallStep (Seq c1 c2,s) = let (cf,sf) = cSmallStep (c1, s)
 cSmallStep (Atrib (Var x) (Num y), s) = (Skip, mudaVar s x y)
 cSmallStep (Atrib (Var x) e,s) =  let (ef,_) = aSmallStep (e,s)
                                   in (Atrib (Var x) ef, s)
+-- Regra de DUPLA ATRIBUIÇÃO
+cSmallStep (DuplaAtrib var1 var2 a1 a2, s) = (Seq (Atrib var1 a1) (Atrib var2 a2), s)
+-- Regra de REPEAT UNTIL
+cSmallStep (RepeatUntil c b, s) = (Seq c (If b Skip (RepeatUntil c b), s)
+-- Regra do FOR
+cSmallStep (For x e1 e2 c, s) = (Seq c1 c2, s)
+  where
+    c1 = 
+
+    let c1 = Atrib x e1
+                                   in (Seq c1 (If (Leq e1 e2) (Seq c1 (For x (Som)))), s)
 
 -- Interpreta todos os comandos
 interpretC :: (CExp,Estado) -> (CExp,Estado)
