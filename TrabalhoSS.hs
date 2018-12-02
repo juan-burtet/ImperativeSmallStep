@@ -129,18 +129,16 @@ cSmallStep (Atrib (Var x) e,s) =  let (ef,_) = aSmallStep (e,s)
 -- Regra de DUPLA ATRIBUIÇÃO
 cSmallStep (DuplaAtrib var1 var2 a1 a2, s) = (Seq (Atrib var1 a1) (Atrib var2 a2), s)
 -- Regra de REPEAT UNTIL
-cSmallStep (RepeatUntil c b, s) = (Seq c (If b Skip (RepeatUntil c b), s)
+cSmallStep (RepeatUntil c b, s) = (Seq c (If b Skip (RepeatUntil c b)), s)
 -- Regra do FOR
-cSmallStep (For x e1 e2 c, s) = (Seq c1 c2, s)
-  where
-    c1 = 
-
-    let c1 = Atrib x e1
-                                   in (Seq c1 (If (Leq e1 e2) (Seq c1 (For x (Som)))), s)
+cSmallStep (For x e1 e2 c, s) = (Seq (Atrib x e1) (If b c1 Skip), s)
+  where 
+    b  = Leq e1 e2 
+    c1 = Seq c (For x (Som e1 (Num 1)) e2 c)
 
 -- Interpreta todos os comandos
 interpretC :: (CExp,Estado) -> (CExp,Estado)
-interpretC (c,s) = if isFinalB then (c,s) else interpretC (cSmallStep (c,s))
+interpretC (c,s) = if isFinalC c then (c,s) else interpretC (cSmallStep (c,s))
 
 -- Confere se o comando é final
 isFinalC :: CExp -> Bool
@@ -152,12 +150,10 @@ isFinalC x = False
 meuEstado :: Estado
 meuEstado = [("x",3), ("y",0), ("z",0)]
 
-
 exemplo :: AExp
 exemplo = Som (Num 3) (Som (Var "x") (Var "y"))
 
--- RODANDO O EXEMPLO:
--- Hugs> interpretA (exemplo, meuEstado)
+-- *Main> interpretA (exemplo, meuEstado)
 
 exemplo2 :: BExp
 exemplo2 = And (And TRUE (Not FALSE)) (And (Not (Not TRUE)) TRUE)
@@ -165,4 +161,74 @@ exemplo2 = And (And TRUE (Not FALSE)) (And (Not (Not TRUE)) TRUE)
 -- *Main> interpretB (exemplo2,meuEstado)
 -- (TRUE,[("x",3),("y",0),("z",0)])
 
+exemplo3 :: CExp
+exemplo3 = If (Leq (Var "x") (Num 4))
+              (Atrib (Var "y") (Mul (Var "x") (Num 4)))
+              (Atrib (Var "z") (Sub (Num 10) (Num 10))) 
 
+-- *Main> interpretC (exemplo3, meuEstado)
+-- (Skip, [("x",3),("y",12),("z",0)])
+
+exemplo4 :: CExp
+exemplo4 = DuplaAtrib (Var "x") (Var "z")
+                      (Num 1)
+                      (Num 2)
+             
+-- *Main> interpretC (exemplo4, meuEstado)
+-- (Skip, [("x",1),("y",0),("z",2)])
+
+exemplo5 :: CExp
+exemplo5 = Seq exemplo3 exemplo4
+
+-- *Main> interpretC (exemplo5, meuEstado)
+-- (Skip, [("x",1),("y",12),("z",2)])
+
+exemplo6 :: CExp
+exemplo6 = Seq exemplo5
+               (If (Ig (Var "x") (Var "y"))
+                  Skip 
+                  (Seq 
+                    (Atrib (Var "x") (Num 0))
+                    (DuplaAtrib (Var "y") (Var "z") (Num 0) (Num 0))
+                  )
+                )
+
+-- *Main> interpretC (exemplo6, meuEstado)
+-- (Skip, [("x",0),("y",0),("z",0)])
+
+exemplo7 :: CExp
+exemplo7 = While (Leq (Var "z") (Num 10))
+                 (Atrib (Var "z") (Som (Var "z") (Num 1)))
+
+-- *Main> interpretC (exemplo7, meuEstado)
+-- (Skip, [("x",3),("y",0),("z",11)])
+
+exemplo8 :: CExp
+exemplo8 = For (Var "y")
+               (Num 0)
+               (Num 10)
+               (Atrib (Var "z") (Som (Var "z") (Num 1)))
+
+-- *Main> interpretC (exemplo8, meuEstado)
+-- (Skip, [("x",3),("y",11),("z",11)])
+
+exemplo9 :: CExp
+exemplo9 = RepeatUntil exemplo8
+                       (Ig (Var "z") (Num 33))
+
+-- *Main> interpretC (exemplo9, meuEstado)
+-- (Skip, [("x",3),("y",11),("z",33)])
+
+exemplo10 :: BExp
+exemplo10 = Or exemplo2 FALSE
+
+-- *Main> interpretB (exemplo10, meuEstado)
+-- (Skip, [("x",3),("y",0),("z",0)])
+
+exemplo11 :: CExp
+exemplo11 = Seq 
+                exemplo9
+                (Atrib (Var "x") (Sub (Var "y") (Var "z")))
+
+-- *Main> interpretC (exemplo11, meuEstado)
+-- (Skip, [("x",-22),("y",11),("z",33)])
