@@ -23,12 +23,12 @@ __BExp__ = __TRUE__ \
 ### Semântica de Comandos
 
 __CExp__ = __While__ _BExp_ _CExp_ \
-| __If__ _BExp_ _CExp_ _CExp_
-| __Seq__ _CExp_ _CExp_ 
-| __Atrib__ _AExp_ _AExp_
-| __DuplaAtrib__ _AExp_ _AExp_ _AExp_ _AExp_
-| __RepeatUntil__ _CExp_ _BExp_
-| __For__ _AExp_ _AExp_ _Aexp_ _CExp_
+| __If__ _BExp_ _CExp_ _CExp_ \
+| __Seq__ _CExp_ _CExp_ \
+| __Atrib__ _AExp_ _AExp_ \
+| __DuplaAtrib__ _AExp_ _AExp_ _AExp_ _AExp_ \
+| __RepeatUntil__ _CExp_ _BExp_ \
+| __For__ _AExp_ _AExp_ _Aexp_ _CExp_ \
 | __Skip__
 
 ## Utilizando o Programa:
