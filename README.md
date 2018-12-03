@@ -33,6 +33,6 @@ __CExp__ = __While__ _BExp_ _CExp_ \
 
 ## Utilizando o Programa:
 
-- Rode o Makefile
-- Interprete utilizando as funções InterpretA, interpretB, interpretC
-- Tuplas de (Expressão/Comando, Estado)
+- Rode o __Makefile__
+- Interprete utilizando as funções _InterpretA, interpretB, interpretC_
+- Tuplas de __(Expressão/Comando, Estado)__
